@@ -104,6 +104,15 @@ BOOL CImgDispDlg::OnInitDialog()
 	//ShowWindow(SW_MINIMIZE);
 
 	// TODO: 在此添加额外的初始化代码
+	int ret = Logger::Prepare();
+	if (ret <= 0)
+	{
+		MessageBox(L"Open logger failed!", L"Error", 0);
+	}
+	else
+	{
+		Logger::Log0("Logger Opened!\n");
+	}
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }

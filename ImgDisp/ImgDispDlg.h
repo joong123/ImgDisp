@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include "logger.h"
+
+
+using Logging::Logger;
 
 // CImgDispDlg 对话框
 class CImgDispDlg : public CDialogEx

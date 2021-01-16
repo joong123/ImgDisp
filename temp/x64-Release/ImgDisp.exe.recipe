@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <ProjectOutputs>F:\Program\个人项目\ImgDisp\bin\x64-Release\ImgDisp.exe</ProjectOutputs>
+  <ProjectOutputs>F:\Program\个人项目\ImgDisp\Base\bin\x64-Release\Base.dll;F:\Program\个人项目\ImgDisp\bin\x64-Release\ImgDisp.exe</ProjectOutputs>
   <ContentFiles></ContentFiles>
   <SatelliteDlls></SatelliteDlls>
   <NonRecipeFileRefs></NonRecipeFileRefs>

@@ -1,6 +1,6 @@
-#define _IMGDISP_SOURCE_FILE_LOCK_CPP
-
 #include "pch.h"
+
+#define _IMGDISP_SOURCE_FILE_LOCK_CPP
 
 #include "lock.h"
 
@@ -17,7 +17,7 @@ int base_lock::AssignMove(base_lock& lck)
 	return 1;
 }
 
-base_lock& base_lock::operator = (base_lock&& lock)
+base_lock& base_lock::operator = (base_lock&& lock) noexcept
 {
 	return *this;
 }
@@ -51,7 +51,7 @@ naive_lock::naive_lock() :
 {
 }
 
-naive_lock::naive_lock(naive_lock&& lck) :
+naive_lock::naive_lock(naive_lock&& lck) noexcept :
 	base_lock(),
 	_tid(INVALID_TID),
 	_bLocked(false)
@@ -81,7 +81,7 @@ naive_lock::~naive_lock()
 	_tid = INVALID_TID;
 }
 
-int naive_lock::AssignMove(naive_lock& lck)
+int naive_lock::AssignMove(naive_lock& lck) noexcept
 {
 	// ======>> LOCK OTHER <<=======
 	LOCK_LOCKOTHERSCG_INTERNAL(lck);
@@ -104,7 +104,7 @@ int naive_lock::AssignMove(naive_lock& lck)
 	return LOCK_RET::LOCK_SUCCEED;
 }
 
-naive_lock& naive_lock::operator = (naive_lock&& lock)
+naive_lock& naive_lock::operator = (naive_lock&& lock) noexcept
 {
 	AssignMove(lock);
 
@@ -179,7 +179,7 @@ count_lock::count_lock() :
 {
 }
 
-count_lock::count_lock(count_lock&& lck) :
+count_lock::count_lock(count_lock&& lck) noexcept :
 	base_lock(),
 	_nRes(COUNTLOCK_DEFAULT_RES),
 	_tid(INVALID_TID),
@@ -210,7 +210,7 @@ count_lock::~count_lock()
 	_tid = INVALID_TID;
 }
 
-int count_lock::AssignMove(count_lock& lck)
+int count_lock::AssignMove(count_lock& lck) noexcept
 {
 	// ======>> LOCK OTHER <<=======
 	LOCK_LOCKOTHERSCG_INTERNAL(lck);
@@ -233,7 +233,7 @@ int count_lock::AssignMove(count_lock& lck)
 	return LOCK_RET::LOCK_SUCCEED;
 }
 
-count_lock& count_lock::operator = (count_lock&& lock)
+count_lock& count_lock::operator = (count_lock&& lock) noexcept
 {
 	AssignMove(lock);
 
@@ -437,7 +437,7 @@ icrwb_lock::icrwb_lock() :
 {
 }
 
-icrwb_lock::icrwb_lock(icrwb_lock&& lock) :
+icrwb_lock::icrwb_lock(icrwb_lock&& lock) noexcept :
 	base_lock(),
 	_status(RWBLOCK_STATUS::RWB_UNLOCK),
 	_nRes(RWBLOCK_DEFAULT_RES),
@@ -484,7 +484,7 @@ icrwb_lock::~icrwb_lock()
 	_status = RWBLOCK_STATUS::RWB_UNLOCK;
 }
 
-int icrwb_lock::AssignMove(icrwb_lock& lck)
+int icrwb_lock::AssignMove(icrwb_lock& lck) noexcept
 {
 	// ======>> LOCK OTHER <<=======
 	LOCK_LOCKOTHERSCG_INTERNAL(lck);
@@ -513,7 +513,7 @@ int icrwb_lock::AssignMove(icrwb_lock& lck)
 	return LOCK_RET::LOCK_SUCCEED;
 }
 
-icrwb_lock& icrwb_lock::operator = (icrwb_lock&& lock)
+icrwb_lock& icrwb_lock::operator = (icrwb_lock&& lock) noexcept
 {
 	AssignMove(lock);
 
@@ -937,15 +937,15 @@ bool atom8<bool>::set(bool vT)
 atom<bool>::atom() :
 	_v(nullptr)
 {
-	_v = new cas_t(ATOM_BOOL_FALSE);
+	_v = new cas_t(ATOMBOOL::ATOM_BOOL_FALSE);
 }
 
 atom<bool>::atom(bool vT) :
 	_v(nullptr)
 {
-	_v = new cas_t(ATOM_BOOL_FALSE);
+	_v = new cas_t(ATOMBOOL::ATOM_BOOL_FALSE);
 
-	cas_t v = vT ? ATOM_BOOL_TRUE : ATOM_BOOL_FALSE;
+	cas_t v = vT ? ATOMBOOL::ATOM_BOOL_TRUE : ATOMBOOL::ATOM_BOOL_FALSE;
 
 	ATOM_SET_INTERNAL(_v, v);
 }
@@ -953,7 +953,7 @@ atom<bool>::atom(bool vT) :
 atom<bool>::atom(const atom<bool>& atm) :
 	_v(nullptr)
 {
-	_v = new cas_t(ATOM_BOOL_FALSE);
+	_v = new cas_t(ATOMBOOL::ATOM_BOOL_FALSE);
 
 	cas_t v = *(atm._v);// pure atom read
 
@@ -985,7 +985,7 @@ atom<bool>& atom<bool>::operator = (const atom<bool>& atm)
 
 int atom<bool>::clear()
 {
-	ATOM_SET_INTERNAL(_v, ATOM_BOOL_FALSE);
+	ATOM_SET_INTERNAL(_v, ATOMBOOL::ATOM_BOOL_FALSE);
 
 	return 1;
 }
@@ -1006,21 +1006,21 @@ bool atom<bool>::get() const
 {
 	cas_t v = *_v;// pure atom read
 
-	return v == ATOM_BOOL_TRUE;
+	return v == ATOMBOOL::ATOM_BOOL_TRUE;
 }
 
 bool atom<bool>::set(bool vT)
 {
-	cas_t v = vT ? ATOM_BOOL_TRUE : ATOM_BOOL_FALSE;
+	cas_t v = vT ? ATOMBOOL::ATOM_BOOL_TRUE : ATOMBOOL::ATOM_BOOL_FALSE;
 	cas_t vOld = *_v;// pure atom read
 	ATOM_SET_INTERNAL(_v, v);
 
-	return vOld == ATOM_BOOL_TRUE;
+	return vOld == ATOMBOOL::ATOM_BOOL_TRUE;
 }
 
 bool atom<bool>::checkandflip(bool chk)
 {
-	cas_t vChk = chk ? ATOM_BOOL_TRUE : ATOM_BOOL_FALSE;
+	cas_t vChk = chk ? ATOMBOOL::ATOM_BOOL_TRUE : ATOMBOOL::ATOM_BOOL_FALSE;
 	cas_t vNew = (vChk ^ ATOMBOOL_XOR_MASK);
 
 	return ATOM_CASS_INTERNAL(_v, vChk, vNew);

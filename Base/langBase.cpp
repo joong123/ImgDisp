@@ -1,6 +1,6 @@
-#define _IMGDISP_SOURCE_FILE_LANGBASE_CPP
-
 #include "pch.h"
+
+#define _IMGDISP_SOURCE_FILE_LANGBASE_CPP
 
 #define DLL_EXPORT_MODE
 #include "langBase.h"
@@ -28,5 +28,7 @@ namespace bse
 	}
 
 }
+
+#undef DLL_EXPORT_MODE
 
 #undef _IMGDISP_SOURCE_FILE_LANGBASE_CPP

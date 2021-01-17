@@ -5,16 +5,17 @@
 #include <strsafe.h>
 
 #include <string>
-#include <fstream>
+
+#include <processthreadsapi.h>
+#include <sysinfoapi.h>
+#include <timezoneapi.h>
+
 
 
 /************************
  Using
 *************************/
-using std::endl;
 using std::string;
-using std::ofstream;
-
 
 
 /************************
@@ -29,97 +30,93 @@ using std::ofstream;
 
 namespace Logging
 {
-
-	//class DLLEXPORT Logger;
-	//extern DLLEXPORT Logger g_logger;
-
-	inline string GetSystemTimeStr(char td = ':')
+	inline char* GetSystemTimeStr(char* dst, size_t len, char td = ':')
 	{
+		if (dst == nullptr)
+			return nullptr;
+
 		FILETIME ft;
 		GetSystemTimeAsFileTime(&ft);
 		SYSTEMTIME st;
 		FileTimeToSystemTime(&ft, &st);
 
-		char buf[32] = { 0 };
-		string fmt = (string)"%u-%02u-%02u-%u" + td + "%02u" + td + "%02u.%03u";
-		StringCchPrintfA(buf, 32, fmt.c_str(),
+		char fmt[32] = "";
+		HRESULT hr = E_FAIL;
+		hr = StringCchPrintfA(fmt, 32, "%%u-%%02u-%%02u-%%u%c%%02u%c%%02u.%%03u", td, td);
+		if (FAILED(hr))
+			return nullptr;
+		//string fmt = (string)"%u-%02u-%02u-%u" + td + "%02u" + td + "%02u.%03u";
+		hr = StringCchPrintfA(dst, len,
+			fmt,
 			st.wYear, st.wMonth, st.wDay,
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		if (FAILED(hr))
+			return nullptr;
 
-		return string(buf);
+		return dst;
 	}
 
-	inline string GetSystemTimeStr2()
+	inline char* GetSystemTimeStr2(char* dst, size_t len)
 	{
+		if (dst == nullptr)
+			return nullptr;
+
 		FILETIME ft;
 		GetSystemTimeAsFileTime(&ft);
 		SYSTEMTIME st;
 		FileTimeToSystemTime(&ft, &st);
 
-		char buf[32] = { 0 };
-		string fmt = (string)"%u%02u%02u%02u%02u%02u%03u";
-		StringCchPrintfA(buf, 32, fmt.c_str(),
+		HRESULT hr = E_FAIL;
+		hr = StringCchPrintfA(dst, len,
+			"%u%02u%02u%u%02u%02u%03u",
 			st.wYear, st.wMonth, st.wDay,
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		if (FAILED(hr))
+			return nullptr;
 
-		return string(buf);
+		return dst;
 	}
+
+	char* GetDirFromPath(const char* file, char* dir, size_t len);
 
 	class DLLEXPORT Logger
 	{
 	public:
 		static bool		__bPrepared;
-		static bool		Prepare();
+		static int		Prepare();
+		static Logger	_logger;
 
 		static int		OpenLogger(const string& file);
+		static int		OpenLogger(const char* file);
 		static int		CloseLogger();
 		static bool		IsLoggerOpen();
 		static int		Log0(const string& msg);
-		static int		Log0(const string& h, const string& msg);
-		static string	GetFile0();
+		static int		Log0(const char* msg);
+		static int		Log0(const char* h, const char* msg);
+		static int		GetFile0(char* buf, size_t len);
 
 	protected:
-		string			_file;
-		ofstream		_out;
+		FILE* _fl = nullptr;
+		char			_fstr[256] = "";
 
 	private:
 		Logger(Logger& log);
 		Logger& operator = (Logger& log);
 	public:
 		Logger();
-		Logger(Logger&& log);
-		Logger& operator = (Logger&& log);
+		Logger(Logger&& log) noexcept;
+		Logger& operator = (Logger&& log) noexcept;
 		~Logger();
 
+		int Open(const char* file);
 		int Open(const string& file);
 		int Close();
-		inline bool IsOpen() const
-		{
-			return _out.is_open();
-		}
-		int Log(const string& msg)
-		{
-			if (IsOpen())
-			{
-				_out << GetSystemTimeStr() << "\t[T#" << GetCurrentThreadId() << "]\t" << msg << endl;
-
-				return 1;
-			}
-
-			return 0;
-		}
-		string GetFile() const
-		{
-			if (__bPrepared)
-			{
-				return _file;
-			}
-
-			return "";
-		}
+		inline bool IsOpen() const;
+		int Log(const string& msg);
+		int Log(const char* msg);
+		int Log(const char* h, const char* msg);
+		int GetFile(char* buf, size_t len) const;
 	};
-
-
 }
 
 #undef _IMGDISP_SOURCE_FILE_LOGGER_H

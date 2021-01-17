@@ -2,6 +2,8 @@
 #pragma once
 
 #include <unordered_map>
+#include <profileapi.h>
+#include <synchapi.h>
 
 #include "langBase.h"
 
@@ -54,6 +56,7 @@ typedef double					sec_t;
 
 typedef scope_guard					lock_guard;
 
+#ifdef USE_ITSSINGLE
 #define ITSSINGLE_SLEEPCYCLE				(1)
 #define ITSSINGLE_INIT_INTERNAL(_lck)		InitializeCriticalSection(&_lck)
 #define ITSSINGLE_TRYLOCK_INTERNAL(_lck)	TryEnterCriticalSection(&_lck)
@@ -76,7 +79,7 @@ public:
 	{
 		ITSSINGLE_INIT_INTERNAL(_section0);
 	}
-	ITSSingle(ITSSingle&& its) : _msCycle(ITSSINGLE_SLEEPCYCLE)
+	ITSSingle(ITSSingle&& its) noexcept : _msCycle(ITSSINGLE_SLEEPCYCLE)
 	{
 		ITSSINGLE_INIT_INTERNAL(_section0);
 	}
@@ -144,6 +147,7 @@ public:
 //#define ITSSINGLE_TRYLOCK		ITSSingle::TryLock();
 //#define ITSSINGLE_UNLOCK		ITSSingle::Unlock();
 
+#endif// ITSSINGLE
 
 
 template<class T>
@@ -195,29 +199,25 @@ public:
 
 	enum { ITSCAS_FREE = 0, ITSCAS_LOCKED = 1, ITSCAS_DYING = -1 };
 private:
-	volatile cas_t* _v;
-	ms_t			_msCycle;
+	volatile cas_t* _v = nullptr;
+	ms_t			_msCycle = ITSCAS_SLEEPCYCLE;
 
 private:
-	ITSCAS(ITSCAS&) : _msCycle(ITSCAS_SLEEPCYCLE) {}
+	ITSCAS(ITSCAS&);
 	ITSCAS& operator = (ITSCAS&);
-	ITSCAS& operator = (ITSCAS&&);
+	ITSCAS& operator = (ITSCAS&&) noexcept;
+	ITSCAS(ITSCAS&& its) noexcept;
 public:
-	ITSCAS() : _msCycle(ITSCAS_SLEEPCYCLE)
+	ITSCAS()
 	{
 		ITSCAS_INIT_INTERNAL(_v);
 	}
-	explicit ITSCAS(cas_t* v) :
-		_v(v)
+	explicit ITSCAS(cas_t* v)
 	{
 		if (nullptr == _v)
 		{
 			ITSCAS_INIT_INTERNAL(_v);
 		}
-	}
-	ITSCAS(ITSCAS&& its)
-	{
-		ITSCAS_INIT_INTERNAL(_v);
 	}
 	virtual			~ITSCAS()
 	{
@@ -609,12 +609,12 @@ private:
 public:
 	base_lock() :
 		its_t() {}
-	base_lock(base_lock&& lock) :
+	base_lock(base_lock&& lock) noexcept :
 		its_t() {}
 	virtual			~base_lock() {}
 
 	int				AssignMove(base_lock&);
-	base_lock& operator = (base_lock&& lock);
+	base_lock& operator = (base_lock&& lock) noexcept;
 
 #pragma region Interface
 
@@ -854,11 +854,11 @@ private:
 	naive_lock& operator = (naive_lock&);
 public:
 	naive_lock();
-	naive_lock(naive_lock&& lock);
+	naive_lock(naive_lock&& lock) noexcept;
 	virtual			~naive_lock() OVERRIDE;
 
-	int				AssignMove(naive_lock&);
-	naive_lock& operator = (naive_lock&& lock);
+	int				AssignMove(naive_lock&) noexcept;
+	naive_lock& operator = (naive_lock&& lock) noexcept;
 
 #pragma region Interface
 
@@ -958,11 +958,11 @@ private:
 	count_lock& operator = (count_lock&);
 public:
 	count_lock();
-	count_lock(count_lock&& lock);
+	count_lock(count_lock&& lock) noexcept;
 	virtual			~count_lock() OVERRIDE;
 
-	int				AssignMove(count_lock&);
-	count_lock& operator = (count_lock&& lock);
+	int				AssignMove(count_lock&) noexcept;
+	count_lock& operator = (count_lock&& lock) noexcept;
 
 #pragma region Interface
 
@@ -1285,11 +1285,11 @@ private:
 	icrwb_lock& operator = (icrwb_lock&);
 public:
 	icrwb_lock();
-	icrwb_lock(icrwb_lock&& lock);
+	icrwb_lock(icrwb_lock&& lock) noexcept;
 	virtual			~icrwb_lock() OVERRIDE;
 
-	int				AssignMove(icrwb_lock&);
-	icrwb_lock& operator = (icrwb_lock&& lock);
+	int				AssignMove(icrwb_lock&) noexcept;
+	icrwb_lock& operator = (icrwb_lock&& lock) noexcept;
 
 #pragma region Interface
 
@@ -1973,7 +1973,7 @@ class atom<bool>
 public:
 	typedef unsigned int	cas_t;
 
-	enum { ATOM_BOOL_FALSE = 0, ATOM_BOOL_TRUE = 1 };
+	enum ATOMBOOL { ATOM_BOOL_FALSE = 0, ATOM_BOOL_TRUE = 1 };
 private:
 	volatile cas_t* _v;
 

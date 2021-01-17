@@ -53,15 +53,15 @@ using std::to_string;
 #define RETVAL_ON_ZERO(v, val)			{ if(0 == (v)) { return (val); }}
 #define RETVAL_ON_FALSE(b, val)			{ if(!(b)) { return (val); }}
 #define RETVAL_ON_FALSE_AND(b, val, stts)	{ if(!(b)) { DO_SOMETHING(stts); return (val); }}
-#define RET_ON_NEG(val)					{ if((val) < 0) { return (val); }}
-#define RET_ON_NEG_AND(val, stts)		{ if((val) < 0) { DO_SOMETHING(stts); return (val); }}
+#define RET_ON_NEG(val)					{ if(decltype(val) $val$ = (val) < 0) { return $val$; }}
+#define RET_ON_NEG_AND(val, stts)		{ if(decltype(val) $val$ = (val) < 0) { DO_SOMETHING(stts); return $val$; }}
 #define RETVAL_ON_NEG(v, val)			{ if((v) < 0) { return (val); }}
 #define RETVAL_ON_NEG_AND(v, val, stts)	{ if((v) < 0) { DO_SOMETHING(stts); return (val); }}
-#define RET_ON_NP(val)					{ if((val) <= 0) { return (val); }}
+#define RET_ON_NP(val)					{ if(decltype(val) $val$ = (val) <= 0) { return $val$; }}
 #define RETVAL_ON_POS(v, val)			{ if((v) > 0) { return (val); }}
 #define RETVAL_ON_NP(v, val)			{ if((v) <= 0) { return (val); }}
 #define RETVAL_ON_NP_AND(v, val, stts)	{ if((v) <= 0) { DO_SOMETHING(stts); return (val); }}
-#define RET_ON_NP_AND(val, stts)		{ if((val) <= 0) { DO_SOMETHING(stts); return (val); }}
+#define RET_ON_NP_AND(val, stts)		{ if(decltype(val) $val$ = (val) <= 0) { DO_SOMETHING(stts); return $val$; }}
 #define RETVAL_ON_NULLPTR_AND(p, val, stts)	{ if(nullptr == (p)) { DO_SOMETHING(stts); return (val); }}
 #define BREAK_ON_FALSE_AND(exp, stts)	{ if(!(exp)) { DO_SOMETHING(stts); break; }}
 #define BREAK_ON_POS(val)				{ if((val) > 0) { break; }}
@@ -797,7 +797,11 @@ namespace bse
 			return f;
 		}
 
-		Ticker()
+		Ticker() :
+			s(0),
+			bRun(false),
+			c(0.0),
+			ca(0.0)
 		{
 			bRun = false;
 		}
@@ -907,13 +911,11 @@ namespace bse
 	/************************
 	 ScopeGuard
 	*************************/
-	//template class DLLEXPORT std::function<void()>;
-
 	template <class F>
 	class ScopeGuard;
 
 	template <class F>
-	struct DLLEXPORT ScopeGuardComp
+	struct ScopeGuardComp
 	{
 	public:
 		typedef std::function<F>	func_t;
@@ -945,10 +947,12 @@ namespace bse
 		}
 	};
 
+	template class DLLEXPORT std::function<void()>;
+	template struct DLLEXPORT ScopeGuardComp<void()>;
 	typedef ScopeGuardComp<void()>	scope_guard_comp;
 
 	template <class F>
-	class DLLEXPORT ScopeGuard
+	class ScopeGuard
 	{
 	public:
 		typedef std::function<F>	func_t;
@@ -1004,7 +1008,7 @@ namespace bse
 		}
 		bool Empty() const
 		{
-			return !_func;
+			return (bool)_func;
 		}
 		bool SetFunc(const func_t& f)
 		{
@@ -1046,9 +1050,8 @@ namespace bse
 			if (_enabled)
 			{
 				if (_func)
-				{
 					_func();
-				}
+
 				_enabled = false;
 			}
 
@@ -1081,8 +1084,8 @@ namespace bse
 		}
 	};
 
+	template class DLLEXPORT std::function<void()>;
 	template class DLLEXPORT ScopeGuard<void()>;
-
 	typedef ScopeGuard<void()>	scope_guard;
 
 	inline void funcScopeGuardNew(void* ptr)
